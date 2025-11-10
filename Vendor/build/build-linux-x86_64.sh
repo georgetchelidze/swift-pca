@@ -25,7 +25,7 @@ make clean || true
 make USE_OPENMP=0 NO_SHARED=1 NO_CBLAS=1 BINARY=64 DYNAMIC_ARCH=1 -j"$NPROC"
 # Ensure LAPACK objects are produced and merged
 make lapack -j"$NPROC"
-make PREFIX="$INSTALL_DIR" install
+make USE_OPENMP=0 NO_SHARED=1 NO_CBLAS=1 BINARY=64 DYNAMIC_ARCH=1 PREFIX="$INSTALL_DIR" install
 
 echo "[linux-x86_64] Stripping shared libs (keeping static .a only)"
 rm -f "$INSTALL_DIR/lib"/*.so* || true
@@ -33,4 +33,3 @@ rm -f "$INSTALL_DIR/lib"/*.dylib || true
 rm -f "$INSTALL_DIR/lib"/*.dll || true
 
 echo "[linux-x86_64] Done. Artifacts: $INSTALL_DIR"
-
