@@ -1,13 +1,13 @@
 # swift-pca
 
-A tiny, self-contained Principal Component Analysis (PCA) implementation in pure Swift. It includes a minimal `Matrix` type, a QR-iteration–based eigen solver, and a simple API to fit and use PCA on 2D `[[Double]]` data.
+A tiny Principal Component Analysis (PCA) library for Swift. By default it uses OpenBLAS/LAPACKE (via a small C wrapper) for eigen decomposition. A simple pure‑Swift fallback exists but is not used by default.
 
 ## Features
-- Simple `Matrix` with multiply, transpose, add/subtract by scalar
-- Covariance computation and eigen decomposition via QR iteration
-- Deterministic principal component signs (dominant loading made positive)
+- Uses BLAS/LAPACKE (OpenBLAS) for symmetric eigendecomposition
+- Simple `Matrix` with multiply/transpose for covariance construction
+- Deterministic component signs (dominant loading made positive)
 - Transform, inverse transform, explained variance, and ratios
-- Zero dependencies; works with Swift Package Manager
+- SwiftPM package; optional pure‑Swift QR fallback (not default)
 
 ## Requirements
 - Swift 5.9+ (Xcode 15+) recommended
@@ -68,6 +68,34 @@ let Xhat = pca.inverseTransform(data: Z)
 - Tests: `swift test`
 
 The test at `Tests/PCATests/PCATests.swift` demonstrates fitting PCA to a small dataset and performs basic sanity checks.
+
+## Native BLAS/LAPACK Setup (Default Path)
+The default build expects prebuilt OpenBLAS + LAPACKE under `Vendor/build/<platform>` or you can point to a custom install via `OPENBLAS_PREFIX`.
+
+- macOS (Apple Silicon):
+  - `chmod +x scripts/*.sh`
+  - `bash scripts/build-darwin-arm64.sh`
+- Linux (x86_64): run on Linux or via Docker from macOS:
+  - `bash scripts/build-linux-x86_64.sh`
+- Convenience (macOS + container runtime):
+  - `bash scripts/build-all.sh` (builds darwin-arm64 locally + linux-x86_64 in a container)
+
+Outputs:
+- OpenBLAS installs under `Vendor/build/<platform>` (headers in `include/`, static libs in `lib/`)
+  - Supported platforms: `darwin-arm64`, `linux-x86_64`
+  - For other platforms (e.g., Linux ARM64), set `OPENBLAS_PREFIX` to your own install.
+- The Swift target `COpenBLAS` compiles a tiny wrapper that calls `LAPACKE_dsyev` and is linked automatically by `PCA`.
+
+If OpenBLAS is installed elsewhere, set:
+
+```bash
+export OPENBLAS_PREFIX=/opt/openblas   # contains include/ and lib/
+swift build
+```
+
+The manifest will use `OPENBLAS_PREFIX/include` and `OPENBLAS_PREFIX/lib` automatically.
+
+Note: iOS was removed from `platforms` since shipping OpenBLAS there is nontrivial.
 
 ## Data Shape
 - Input is `[[Double]]` with shape `(nSamples, nFeatures)`.

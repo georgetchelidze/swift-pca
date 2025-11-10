@@ -28,35 +28,18 @@ public struct PCA {
         }
 
         let C = (centered.transposed() * centered) / Double(X.rows - 1)
-        var (eigenvalues, eigenvectors) = eigenDecompositionQR(C)
+        var (eigenvalues, eigenvectors) = eigenDecompositionBLAS(C)
 
-        // Sort eigenvalues descending
-        let sorted = zip(eigenvalues, (0..<eigenvalues.count)).sorted { $0.0 > $1.0 }
-        eigenvalues = sorted.map { $0.0 }
-        let order = sorted.map { $0.1 }
-        var sortedVectors = Matrix(eigenvectors.rows, nComponents)
+        // eigenDecompositionBLAS already returns descending by value and deterministic signs.
+        var comps = Matrix(eigenvectors.rows, nComponents)
         for newCol in 0..<nComponents {
-            let oldCol = order[newCol]
             for r in 0..<eigenvectors.rows {
-                sortedVectors[r, newCol] = eigenvectors[r, oldCol]
-            }
-        }
-
-        // Make component signs deterministic: largest |loading| should be positive
-        for j in 0..<sortedVectors.cols {
-            var maxIdx = 0
-            var maxAbs = 0.0
-            for i in 0..<sortedVectors.rows {
-                let v = abs(sortedVectors[i, j])
-                if v > maxAbs { maxAbs = v; maxIdx = i }
-            }
-            if sortedVectors[maxIdx, j] < 0 {
-                for i in 0..<sortedVectors.rows { sortedVectors[i, j] *= -1 }
+                comps[r, newCol] = eigenvectors[r, newCol]
             }
         }
 
         let topEigenvalues = Array(eigenvalues.prefix(nComponents))
-        return PCA(components: sortedVectors, mean: mean, explainedVariance: topEigenvalues)
+        return PCA(components: comps, mean: mean, explainedVariance: topEigenvalues)
     }
 
     public func transform(data: [[Double]]) -> [[Double]] {
