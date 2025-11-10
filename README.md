@@ -3,7 +3,7 @@
 A tiny Principal Component Analysis (PCA) library for Swift. By default it uses OpenBLAS/LAPACKE (via a small C wrapper) for eigen decomposition. A simple pure‑Swift fallback exists but is not used by default.
 
 ## Features
-- Uses BLAS/LAPACKE (OpenBLAS) for symmetric eigendecomposition
+- Uses OpenBLAS + LAPACK for symmetric eigendecomposition
 - Simple `Matrix` with multiply/transpose for covariance construction
 - Deterministic component signs (dominant loading made positive)
 - Transform, inverse transform, explained variance, and ratios
@@ -70,21 +70,17 @@ let Xhat = pca.inverseTransform(data: Z)
 The test at `Tests/PCATests/PCATests.swift` demonstrates fitting PCA to a small dataset and performs basic sanity checks.
 
 ## Native BLAS/LAPACK Setup (Default Path)
-The default build expects prebuilt OpenBLAS + LAPACKE under `Vendor/build/<platform>` or you can point to a custom install via `OPENBLAS_PREFIX`.
+The default build expects prebuilt OpenBLAS with LAPACK included under `Vendor/build/<platform>` or you can point to a custom install via `OPENBLAS_PREFIX`.
 
-- macOS (Apple Silicon):
-  - `chmod +x scripts/*.sh`
-  - `bash scripts/build-darwin-arm64.sh`
 - Linux (x86_64): run on Linux or via Docker from macOS:
-  - `bash scripts/build-linux-x86_64.sh`
-- Convenience (macOS + container runtime):
-  - `bash scripts/build-all.sh` (builds darwin-arm64 locally + linux-x86_64 in a container)
+  - `bash Vendor/build/build-linux-x86_64.sh`
+  
 
 Outputs:
 - OpenBLAS installs under `Vendor/build/<platform>` (headers in `include/`, static libs in `lib/`)
-  - Supported platforms: `darwin-arm64`, `linux-x86_64`
+  - Supported prebuilts: `linux-x86_64`
   - For other platforms (e.g., Linux ARM64), set `OPENBLAS_PREFIX` to your own install.
-- The Swift target `COpenBLAS` compiles a tiny wrapper that calls `LAPACKE_dsyev` and is linked automatically by `PCA`.
+- The Swift target `COpenBLAS` compiles a tiny wrapper that calls the Fortran LAPACK symbol `dsyev_` and is linked automatically by `PCA`.
 
 If OpenBLAS is installed elsewhere, set:
 
@@ -96,6 +92,9 @@ swift build
 The manifest will use `OPENBLAS_PREFIX/include` and `OPENBLAS_PREFIX/lib` automatically.
 
 Note: iOS was removed from `platforms` since shipping OpenBLAS there is nontrivial.
+
+### macOS note
+On macOS, the package links the system `Accelerate` framework; no vendored OpenBLAS is needed. If you prefer using only OpenBLAS on macOS, build OpenBLAS with LAPACK yourself and remove the `Accelerate` link from `Package.swift`.
 
 ## Data Shape
 - Input is `[[Double]]` with shape `(nSamples, nFeatures)`.

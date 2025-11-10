@@ -1,5 +1,4 @@
 module COpenBLAS [system] {
   header "include/openblas_wrappers.h"
-  link "openblas"
   export *
 }

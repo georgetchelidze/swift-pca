@@ -26,9 +26,6 @@ let openblasPrefix: String = {
 
 let includeFlags = ["-I", "\(openblasPrefix)/include"]
 let libFlags = ["-L", "\(openblasPrefix)/lib"]
-let rpathFlags: [LinkedSetting] = [
-    .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "\(openblasPrefix)/lib"]) 
-]
 
 let package = Package(
     name: "swift-pca",
@@ -48,12 +45,22 @@ let package = Package(
         .target(
             name: "COpenBLAS",
             dependencies: [],
-            cSettings: [ .unsafeFlags(includeFlags) ],
-            linkerSettings: [ .unsafeFlags(libFlags) ] + rpathFlags + [
-                .linkedLibrary("openblas"),
+            cSettings: [
+                .unsafeFlags(includeFlags, .when(platforms: [.linux]))
+            ],
+            linkerSettings: [
+                // Linux: search path + rpath for vendored OpenBLAS
+                .unsafeFlags(libFlags, .when(platforms: [.linux])),
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "\(openblasPrefix)/lib"], .when(platforms: [.linux])),
+
+                // Linux: link static OpenBLAS and deps
+                .linkedLibrary("openblas", .when(platforms: [.linux])),
                 .linkedLibrary("m", .when(platforms: [.linux])),
                 .linkedLibrary("pthread", .when(platforms: [.linux])),
-                .linkedLibrary("gfortran")
+                .linkedLibrary("gfortran", .when(platforms: [.linux])),
+
+                // macOS: use Accelerate instead of vendored OpenBLAS
+                .linkedFramework("Accelerate", .when(platforms: [.macOS]))
             ]
         ),
         .target(
