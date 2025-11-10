@@ -70,9 +70,9 @@ let Xhat = pca.inverseTransform(data: Z)
 The test at `Tests/PCATests/PCATests.swift` demonstrates fitting PCA to a small dataset and performs basic sanity checks.
 
 ## Native BLAS/LAPACK Setup (Default Path)
-The default build expects prebuilt OpenBLAS with LAPACK included under `Vendor/build/<platform>` or you can point to a custom install via `OPENBLAS_PREFIX`.
+The default build uses a prebuilt, vendored OpenBLAS (with LAPACK) for Linux x86_64. No extra system installs are required for consumers: the repository includes the static OpenBLAS archive and vendors the required Fortran runtime static libraries (`libgfortran.a`, `libquadmath.a`). You can also point to a custom install via `OPENBLAS_PREFIX`.
 
-- Linux (x86_64): run on Linux or via Docker from macOS:
+- Linux (x86_64) maintainer build:
   - `bash Vendor/build/build-linux-x86_64.sh`
   
 

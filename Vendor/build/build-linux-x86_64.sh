@@ -32,4 +32,19 @@ rm -f "$INSTALL_DIR/lib"/*.so* || true
 rm -f "$INSTALL_DIR/lib"/*.dylib || true
 rm -f "$INSTALL_DIR/lib"/*.dll || true
 
+# Vendor Fortran runtime static libs so consumers don't need system installs
+echo "[linux-x86_64] Attempting to vendor libgfortran.a and libquadmath.a"
+GFORT_A="$(gfortran -print-file-name=libgfortran.a || true)"
+QUADM_A="$(gfortran -print-file-name=libquadmath.a || true)"
+if [ -f "$GFORT_A" ]; then
+  cp -f "$GFORT_A" "$INSTALL_DIR/lib/" && echo "  - vendored $(basename "$GFORT_A")"
+else
+  echo "  - libgfortran.a not found via gfortran; skipping"
+fi
+if [ -f "$QUADM_A" ]; then
+  cp -f "$QUADM_A" "$INSTALL_DIR/lib/" && echo "  - vendored $(basename "$QUADM_A")"
+else
+  echo "  - libquadmath.a not found via gfortran; skipping"
+fi
+
 echo "[linux-x86_64] Done. Artifacts: $INSTALL_DIR"

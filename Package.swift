@@ -49,15 +49,15 @@ let package = Package(
                 .unsafeFlags(includeFlags, .when(platforms: [.linux]))
             ],
             linkerSettings: [
-                // Linux: search path + rpath for vendored OpenBLAS
+                // Linux: search path for vendored OpenBLAS and runtime libs
                 .unsafeFlags(libFlags, .when(platforms: [.linux])),
-                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "\(openblasPrefix)/lib"], .when(platforms: [.linux])),
 
                 // Linux: link static OpenBLAS and deps
                 .linkedLibrary("openblas", .when(platforms: [.linux])),
                 .linkedLibrary("m", .when(platforms: [.linux])),
                 .linkedLibrary("pthread", .when(platforms: [.linux])),
                 .linkedLibrary("gfortran", .when(platforms: [.linux])),
+                .linkedLibrary("quadmath", .when(platforms: [.linux])),
 
                 // macOS: use Accelerate instead of vendored OpenBLAS
                 .linkedFramework("Accelerate", .when(platforms: [.macOS]))
